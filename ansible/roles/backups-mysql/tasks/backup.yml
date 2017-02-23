@@ -1,0 +1,22 @@
+---
+### backup db
+# input:
+# see /vars/default.yml
+# - app_name
+# - many, many
+
+  - debug: msg="b={{backup_dir}}"
+
+#
+  - name: create dirs
+    local_action: file path={{backup_dir}} state=directory mode=0775
+
+
+  - name: mysqldump
+    shell: mysqldump {{mysql_dump_options}} --host={{db_server}} --user={{db_user}} --password={{db_password}} {{db_name}} | gzip > "/tmp/backup-{{db_name}}.sql.gz"
+
+
+  - name: download backup file
+    fetch: src=/tmp/backup-{{db_name}}.sql.gz dest={{backup_dir}}/{{filename}}.{{ext}} flat=yes
+
+

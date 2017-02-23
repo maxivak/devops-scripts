@@ -1,0 +1,120 @@
+---
+- hosts: all
+  sudo : true
+  vars_files:
+    - ../vars/common.yml
+    - vars/{{machine}}.yml
+
+  tasks:
+
+# base
+    - hostname: name={{hostname}}
+
+
+    - name: add swap
+      vars:
+        size: "2G"
+        filename: "/swapfile"
+      include: "{{dir_scripts}}/swap/add_swap.yml"
+
+
+
+### nfs client
+
+    - apt: update_cache=yes
+
+    - name: nfs-common
+      shell: sudo apt-get install nfs-common
+
+
+### user, group
+    - name: create group dev
+      group: name=dev state=present
+
+
+### gitlab
+    - name: install packages
+      apt: name={{item}} state=present
+      with_items:
+        - curl
+        - openssh-server
+        - ca-certificates
+        - postfix
+
+    - name: install gitlab
+      shell: >
+        curl https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.deb.sh | sudo bash;
+        sudo apt-get update;
+        sudo apt-get install gitlab-ce;
+        sudo gitlab-ctl reconfigure;
+
+
+
+
+
+
+# config gitlab
+
+# git storage
+# http://doc.gitlab.com/omnibus/settings/configuration.html#storing-git-data-in-an-alternative-directory
+# By default, omnibus-gitlab stores the Git repository data under /var/opt/gitlab/git-data
+
+# /etc/gitlab/gitlab.rb
+# git_data_dir "/mnt/repos"
+
+
+# share on server
+# /etc/exports
+# /disk2/data/gitlab/repos *(rw,insecure,sync,no_subtree_check,no_root_squash)
+#
+
+    - name: umount
+      shell: sudo umount {{dir_repos}}
+      ignore_errors: yes
+
+
+    - name: dir /mnt/repos
+      file: path={{dir_repos}} state=directory mode=0777 owner=git group=dev
+      ignore_errors: yes
+
+
+
+
+    - name: automount files
+      lineinfile: >
+        dest=/etc/fstab
+        regexp="{{dir_repos}}\s+.*"
+        line="{{main_server_ip}}:{{server_dir_repos}}    {{dir_repos}}  nfs  vers=3,rw,hard,bg,intr 0 0"
+        state=present
+
+
+    - name: mount now
+      shell: >
+        sudo mount -a
+
+
+    - shell: sudo chown git:dev {{dir_repos}}
+
+
+# reconfigure
+    #- shell: sudo gitlab-ctl stop
+
+
+    - name: config
+      copy: src=files/gitlab.rb dest=/etc/gitlab/gitlab.rb
+
+# sudo rsync -av /var/opt/gitlab/git-data/repositories /mnt/repos
+
+
+    - name: configure
+      shell: sudo gitlab-ctl reconfigure
+
+
+    - shell: sudo chown git:dev {{dir_repos}}
+
+
+#    - shell: sudo gitlab-ctl start
+
+# Browse to the hostname and login
+# root
+# 5iveL!fe

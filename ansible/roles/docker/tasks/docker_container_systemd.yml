@@ -1,0 +1,29 @@
+---
+### setup docker container monitoring with systemd
+### input:
+# - container - container name
+
+- hosts: all
+  sudo: yes
+  tasks:
+
+    - set_fact:
+        service_name: "docker_{{container}}"
+
+    - name: copy service file
+      template:
+        src=../files/systemd/docker_container.service.j2
+        dest=/etc/systemd/system/{{service_name}}.service
+        owner=root group=root mode=0775
+
+    - name: enable service
+      shell: sudo systemctl enable {{service_name}}
+
+
+    - name: systemctl reload
+      shell: sudo systemctl  daemon-reload
+
+
+    - name: start service
+      shell: sudo systemctl start {{service_name}}
+

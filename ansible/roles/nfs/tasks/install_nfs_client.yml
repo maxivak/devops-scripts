@@ -1,0 +1,6 @@
+
+# nfs-common
+
+  - apt: update_cache=yes
+
+  - shell: sudo apt-get install nfs-common

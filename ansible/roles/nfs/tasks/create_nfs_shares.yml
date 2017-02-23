@@ -1,0 +1,37 @@
+# input
+# dirs - list of dirs
+# user
+# group
+
+---
+
+  - name: dir
+    file: path={{item}} state=directory mode=0775 owner={{user}} group={{group}}
+    with_items: dirs
+
+
+  # config nfs
+  - name: edit /etc/exports
+    lineinfile: >
+      dest=/etc/exports regexp="{{item}}\s+.*"
+      line="{{item}}  *(rw,insecure,sync,no_subtree_check,no_root_squash)"
+      state=present
+    with_items: dirs
+
+
+
+# nfs client
+
+
+  - name: fix permissions for dir
+    shell: sudo chown {{user}}:{{group}} -R {{item}}
+    with_items: dirs
+
+
+  - name: exportfs
+    shell: sudo exportfs -a
+
+  - name: restart nfs
+    shell: sudo service nfs-kernel-server restart
+
+

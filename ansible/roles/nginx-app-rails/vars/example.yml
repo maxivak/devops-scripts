@@ -1,0 +1,4 @@
+ruby_user: uadmin
+app_name: myapp
+app_domain: mysite.com
+app_env: production

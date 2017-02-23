@@ -1,0 +1,7 @@
+---
+- name: remove temp
+  shell: sudo rm /tmp/sensu_*
+
+- name: restart sensu server
+  shell: sudo /etc/init.d/sensu-server restart;
+    sudo /etc/init.d/sensu-api restart;

@@ -1,0 +1,24 @@
+# input
+# server
+# server_dir
+# local_dir
+
+---
+
+  - name: dir
+    file: path={{local_dir}} state=directory mode=0775 owner=nobody group={{group}}
+
+
+  # config nfs
+  - name: edit /etc/fstab
+    lineinfile: >
+      dest=/etc/fstab regexp="{{server}}:{{server_dir}}.*"
+      line="{{server}}:{{server_dir}} nfs  vers=3,rw,hard,bg,intr 0 0"
+      state=present
+
+
+
+
+  - name: mount
+    shell: sudo mount -a
+

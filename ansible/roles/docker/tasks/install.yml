@@ -1,0 +1,71 @@
+---
+## install docker, docker-compose
+## !!! for ubuntu 15.10
+
+- hosts: all
+  sudo: yes
+  tasks:
+
+
+    - shell: >
+        sudo apt-get update;
+        sudo apt-get install -y apt-transport-https ca-certificates;
+
+    - shell: >
+        sudo apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D;
+
+
+    - shell: >
+        sudo bash -c 'echo deb https://apt.dockerproject.org/repo ubuntu-wily main > /etc/apt/sources.list.d/docker.list'
+
+
+    - shell: >
+        sudo apt-get update;
+        sudo apt-get purge lxc-docker;
+        apt-cache policy docker-engine;
+
+    - shell: >
+        sudo apt-get install -y linux-image-extra-$(uname -r);
+
+
+# install docker
+
+#    - shell: >
+#        sudo apt-get install -y docker-engine;
+
+    - shell: >
+        sudo curl https://get.docker.com | bash;
+        sudo service docker start;
+
+#sudo groupadd docker
+
+# Add your user to docker group.
+# sudo usermod -aG docker ubuntu
+
+# docker-compose
+
+# https://docs.docker.com/compose/
+# https://docs.docker.com/compose/install/
+
+
+    - name: install docker-compose
+      shell: >
+        sudo bash -c 'curl -L https://github.com/docker/compose/releases/download/1.7.1/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose;'
+        sudo chmod +x /usr/local/bin/docker-compose
+
+# test
+#docker-compose --version
+
+
+
+### systemd-docker
+    - name: /opt/bin
+      shell: mkdir -p /opt/bin
+
+    - name: install systemd-docker
+      copy: src=../../devops-scripts/roles/docker/files/systemd-docker/systemd-docker
+        dest=/opt/bin/systemd-docker
+        owner=root
+        group=root
+        mode=0775
+

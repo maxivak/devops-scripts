@@ -1,0 +1,58 @@
+---
+### backup db
+# input:
+# see /vars/default.yml
+# - app_name
+# - backup_dir
+
+
+
+#    - add_host: name=api.local groups=myservers foo=42
+
+
+#  - name: set
+#    set_fact:
+#      backup_dir: "{{backup_dir_base}}/{{app_name}}/db"
+
+  - debug: msg="b={{backup_dir}}"
+
+  #- name: create dirs
+  #  local_action: file path={{backup_dir}} state=directory mode=0775
+
+
+  - name: mysqldump
+    shell: mysqldump {{mysql_dump_options}} --host={{db_server}} --user={{db_user}} --password={{db_password}} {{db_name}} | gzip > "/tmp/backup-{{db_name}}.sql.gz"
+
+
+  - name: download backup file
+    fetch: src=/tmp/backup-{{db_name}}.sql.gz dest={{backup_dir}}/{{db_name}}.sql.gz flat=yes
+
+  - name: Set filename
+    set_fact:
+      backup_filepath: "{{backup_dir}}/{{db_name}}.sql.gz"
+
+
+  - debug: msg="file={{backup_filepath}}"
+
+## daily copies
+  - name: dir for daily copies
+    local_action: shell mkdir -p {{backup_dir}}/daily; chmod 775 {{backup_dir}}/daily;
+
+  - name: copy daily copy
+    local_action: shell backup_date_day=`date +%Y%m%d`;   cp -f {{backup_filepath}} "{{backup_dir}}/daily/{{db_name}}-${backup_date_day}.sql.gz"
+
+  - name: remove old daily backups
+    local_action: shell "cd {{backup_dir}}/daily; (ls -t|head -n {{backup_keep_n_daily}};ls)|sort|uniq -u|xargs rm; ";
+    ignore_errors: yes
+
+## monthly copies
+  - name: dir for monthly copies
+    local_action: shell mkdir -p {{backup_dir}}/monthly; chmod 775 {{backup_dir}}/monthly;
+
+  - name: copy monthly copy
+    local_action: shell backup_date=`date +%Y%m`;   cp -f {{backup_filepath}} "{{backup_dir}}/monthly/{{db_name}}-${backup_date}.sql.gz"
+
+  - name: remove old monthly backups
+    local_action: shell "cd {{backup_dir}}/monthly; (ls -t|head -n {{backup_keep_n_monthly}};ls)|sort|uniq -u|xargs rm; ";
+    ignore_errors: yes
+

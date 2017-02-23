@@ -1,0 +1,49 @@
+---
+
+  - name: copy shell
+    copy: src=install_rabbitmq.sh dest=/tmp owner=root group=root mode=755
+
+  - name: run install
+    shell: cd /tmp; ./install_rabbitmq.sh
+
+
+
+  - name: rabbitmq config - ulimit
+    lineinfile: >
+      dest=/etc/nsswitch.conf
+      regexp=".*ulimit .*"
+      line="ulimit -n 102400"
+      state=present
+
+# limits
+  - name: limits.conf - 1
+    lineinfile: >
+      dest=/etc/nsswitch.conf
+      regexp="* +soft +nofile .*"
+      line="* soft nofile 65536"
+      state=present
+
+  - name: limits.conf - 2
+    lineinfile: >
+      dest=/etc/nsswitch.conf
+      regexp="* +hard +nofile .*"
+      line="* hard nofile 65536"
+      state=present
+
+
+#
+  - name: add admin user
+    vars:
+      username: "{{rabbitmq_admin_user}}"
+      password: "{{rabbitmq_admin_password}}"
+      vhost: "/"
+    include: add_user.yml
+
+  - name: delete guest
+    shell: sudo rabbitmqctl delete_user guest
+
+
+  - name: restart rabbitmq
+    shell: sudo service rabbitmq-server restart
+
+

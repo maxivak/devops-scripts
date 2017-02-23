@@ -1,0 +1,116 @@
+---
+
+######## Install. with data volume containers
+
+# input:
+# - docker_image_postgresql
+# - docker_image_redis
+# - docker_image_gitlab
+# - clear_data - clear data in data volumes or not
+# - kill - kill running containers
+
+
+# input
+
+- set_fact:
+    docker_image_postgresql: "sameersbn/postgresql:9.4-13"
+  when: docker_image_postgresql is not defined
+
+- set_fact:
+    docker_image_redis: "sameersbn/redis:latest"
+  when: docker_image_redis is not defined
+
+- set_fact:
+    docker_image_gitlab: "sameersbn/gitlab:8.4.4"
+  when: docker_image_gitlab is not defined
+
+
+
+
+# create data containers
+- name: data containers gitlab-data-postgresql
+  shell: sudo docker volume create --name gitlab-data-postgresql
+  ignore_errors: yes
+
+- name: data container gitlab-data-redis
+  shell: sudo docker volume create --name gitlab-data-redis
+  ignore_errors: yes
+
+- name: data container gitlab-data-git
+  shell: sudo docker volume create --name gitlab-data-git
+  ignore_errors: yes
+
+
+
+
+# remove data in data containers
+
+- name: remove data in data containers
+  shell: >
+    sudo docker run --rm     \
+    -v  gitlab-data-postgresql:/data/postgresql  \
+    -v  gitlab-data-redis:/data/redis  \
+    -v  gitlab-data-git:/data/git \
+    ubuntu  \
+    /bin/bash -c "cd /data/postgresql; rm -rf *; cd /data/redis; rm -rf *; cd /data/git; rm -rf *; "
+  when: clear_data is defined
+  ignore_errors: yes
+
+
+
+
+
+### remove containers
+
+- name: kill containers
+  shell: sudo docker rm -f {{item}}
+  with_items:
+   - gitlab
+   - gitlab-redis
+   - gitlab-postgresql
+  when: kill is defined
+  ignore_errors: yes
+
+
+### run containers
+
+- name: postgresql container
+  shell: >
+    sudo docker run --name gitlab-postgresql -d \
+    --env 'DB_NAME=gitlabhq_production'  \
+    --env 'DB_USER={{gitlab_postgresql_user}}' \
+    --env 'DB_PASS={{gitlab_postgresql_pwd}}'   \
+    --env 'GITLAB_SECRETS_DB_KEY_BASE={{gitlab_db_secret}}'
+    -v  gitlab-data-postgresql:/var/lib/postgresql  \
+    {{docker_image_postgresql}}
+
+
+- name: redis container
+  shell: sudo docker run --name gitlab-redis -d -v gitlab-data-redis:/var/lib/redis  {{docker_image_redis}}
+
+
+- name: gitlab container
+  shell: >
+    sudo docker run --name gitlab -d  \
+      --link gitlab-postgresql:postgresql --link gitlab-redis:redisio   \
+      --publish {{gitlab_ssh_port}}:22 --publish {{gitlab_web_port}}:80   \
+      --env 'GITLAB_PORT={{gitlab_web_port}}' --env 'GITLAB_SSH_PORT={{gitlab_ssh_port}}'   \
+      --env 'GITLAB_SECRETS_DB_KEY_BASE={{gitlab_db_secret}}'  \
+      --env 'GITLAB_HOST={{gitlab_host}}'  \
+      --env 'DB_NAME=gitlabhq_production'  \
+      --env 'DB_USER={{gitlab_postgresql_user}}' \
+      --env 'DB_PASS={{gitlab_postgresql_pwd}}' \
+      --env 'SMTP_USER={{gitlab_smtp_user}}' \
+      --env 'SMTP_PASS={{gitlab_smtp_pass}}' \
+      --env 'SMTP_DOMAIN={{gitlab_smtp_host}}' \
+      --env 'SMTP_HOST={{gitlab_smtp_host}}' \
+      -v gitlab-data-git:/home/git/data    \
+      {{docker_image_gitlab}}
+
+    sudo docker exec gitlab sudo service gitlab start;
+
+
+
+
+
+

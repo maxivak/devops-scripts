@@ -1,0 +1,6 @@
+# backup DB
+
+ansible-playbook -i /mnt/data/projects/mmx/scripts/inventory backup.yml -e "host=devapi"
+
+# add cron
+ansible-playbook -i /mnt/data/projects/mmx/scripts/inventory add_cron_backup_mysql.yml -e "host=devapi"

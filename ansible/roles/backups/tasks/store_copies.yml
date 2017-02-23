@@ -1,0 +1,49 @@
+---
+### store backup file to daily/, monthly/ folders
+# input:
+# - backup_dir: base dir
+# - filename: base filename, like db.sql.gz
+# - ext: extension
+# - backup_keep_n_daily - N of files
+# - backup_keep_n_monthly - N of files
+
+
+  - set_fact:
+      backup_filepath: "{{ backup_dir }}/{{ filename }}.{{ ext }}"
+      date_day: "{{ ansible_date_time.year }}{{ ansible_date_time.month }}{{ ansible_date_time.day }}"
+      date_month: "{{ ansible_date_time.year }}{{ ansible_date_time.month }}"
+
+
+## daily copies
+  - set_fact:
+      backup_daily_filepath: "{{backup_dir}}/daily/{{filename}}-{{date_day}}.{{ext}}"
+
+
+  - name: dir for daily copies
+    local_action: shell mkdir -p {{backup_dir}}/daily; chmod 775 {{backup_dir}}/daily;
+    #shell: mkdir -p {{backup_dir}}/daily; chmod 775 {{backup_dir}}/daily;
+
+  - name: copy daily copy
+    local_action: shell cp -f {{backup_filepath}} "{{backup_daily_filepath}}"
+
+  - name: remove old daily backups
+    local_action: shell "cd {{backup_dir}}/daily; (ls -t|head -n {{backup_keep_n_daily}};ls)|sort|uniq -u|xargs rm; ";
+    ignore_errors: yes
+
+
+## monthly copies
+  - set_fact:
+      backup_monthly_filepath: "{{backup_dir}}/monthly/{{filename}}-{{date_month}}.{{ext}}"
+
+
+  - name: dir for monthly copies
+    local_action: shell mkdir -p {{backup_dir}}/monthly; chmod 775 {{backup_dir}}/monthly;
+
+  - name: copy monthly copy
+    local_action: shell cp -f {{backup_filepath}} "{{backup_monthly_filepath}}"
+
+  - name: remove old monthly backups
+    local_action: shell "cd {{backup_dir}}/monthly; (ls -t|head -n {{backup_keep_n_monthly}};ls)|sort|uniq -u|xargs rm; ";
+    ignore_errors: yes
+
+

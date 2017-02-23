@@ -1,0 +1,122 @@
+###
+# input:
+# - restore_dir
+# - tag - backup tag
+# - new_tag - new tag for images to restore
+
+
+- name: restore containers
+  hosts: all
+  sudo: yes
+  tasks:
+
+
+    - set_fact:
+        t_current: "{{ansible_date_time.epoch}}"
+
+
+
+    - name: default restore_dir
+      set_fact:
+        restore_dir: "{{backups_dir_base}}/{{ gitlab_backups_dir }}"
+      when: restore_dir is not defined
+
+
+
+    #
+
+    - name: create images from tar files
+      shell: >
+        cd {{restore_dir}} && sudo docker load < gitlab-redis-{{tag}}.tar;
+        cd {{restore_dir}} && sudo docker load < gitlab-postgresql-{{tag}}.tar;
+        cd {{restore_dir}} && sudo docker load < gitlab-{{tag}}.tar;
+
+
+    - name: rename images
+      shell: >
+        sudo docker tag backups/gitlab-redis:{{tag}} gitlab-redis:{{new_tag}};
+        sudo docker tag backups/gitlab-postgresql:{{tag}} gitlab-postgresql:{{new_tag}};
+        sudo docker tag backups/gitlab:{{tag}} gitlab:{{new_tag}};
+
+
+# run containers
+
+    - set_fact:
+        #clear_data: 1
+        kill: 1
+        run_redis: 1
+        run_postgresql: 1
+        run_gitlab: 1
+        docker_image_redis: "gitlab-redis:{{new_tag}}"
+        docker_image_postgresql: "gitlab-postgresql:{{new_tag}}"
+        docker_image_gitlab: "gitlab:{{new_tag}}"
+
+
+    - set_fact:
+        docker_image_postgresql: "sameersbn/postgresql:9.4-13"
+      when: docker_image_postgresql is not defined
+
+    - set_fact:
+        docker_image_redis: "sameersbn/redis:latest"
+      when: docker_image_redis is not defined
+
+    - set_fact:
+        docker_image_gitlab: "sameersbn/gitlab:8.4.4"
+      when: docker_image_gitlab is not defined
+
+
+#    - include: ../../devops-scripts/roles/gitlab/tasks/install_gitlab_docker.yml
+
+
+    - name: kill containers
+      shell: sudo docker rm -f gitlab
+      when: run_gitlab is defined
+      ignore_errors: yes
+
+    - name: kill containers
+      shell: sudo docker rm -f gitlab-redis
+      when: run_redis is defined
+      ignore_errors: yes
+
+    - name: kill containers
+      shell: sudo docker rm -f gitlab-postgresql
+      when: run_postgresql is defined
+      ignore_errors: yes
+
+
+
+
+    ### run containers
+
+    - name: postgresql container
+      shell: >
+        sudo docker run --name gitlab-postgresql -d \
+        --env 'DB_NAME=gitlabhq_production'  \
+        --env 'DB_USER={{gitlab_postgresql_user}}' \
+        --env 'DB_PASS={{gitlab_postgresql_pwd}}'   \
+        --env 'GITLAB_SECRETS_DB_KEY_BASE={{gitlab_db_secret}}'
+        -v  gitlab-data-postgresql:/var/lib/postgresql  \
+        {{docker_image_postgresql}}
+
+      when: run_postgresql is defined
+
+    - name: redis container
+      shell: sudo docker run --name gitlab-redis -d -v gitlab-data-redis:/var/lib/redis  {{docker_image_redis}}
+      when: run_redis is defined
+
+
+    - name: gitlab container
+      shell: >
+        sudo docker run --name gitlab -d  \
+          --link gitlab-postgresql:postgresql --link gitlab-redis:redisio   \
+          --publish {{gitlab_ssh_port}}:22 --publish {{gitlab_web_port}}:80   \
+          --env 'GITLAB_PORT={{gitlab_web_port}}' --env 'GITLAB_SSH_PORT={{gitlab_ssh_port}}'   \
+          --env 'GITLAB_SECRETS_DB_KEY_BASE={{gitlab_db_secret}}'  \
+          --env 'DB_NAME=gitlabhq_production'  \
+          --env 'DB_USER={{gitlab_postgresql_user}}' --env 'DB_PASS={{gitlab_postgresql_pwd}}' \
+          -v gitlab-data-git:/home/git/data    \
+          {{docker_image_gitlab}};
+
+        sudo docker exec gitlab sudo service gitlab start
+      when: run_gitlab is defined
+

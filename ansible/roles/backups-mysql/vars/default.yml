@@ -1,0 +1,8 @@
+backup_dir_base: "/mnt/data/backups"
+db_server: localhost
+db_user: root
+db_password: username
+db_name: dbname
+mysql_dump_options: "--skip-add-locks --single-transaction=TRUE --lock-tables=false"
+backup_keep_n_daily: 10
+backup_keep_n_monthly: 60

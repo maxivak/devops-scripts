@@ -1,0 +1,14 @@
+- hosts: '{{host}}'
+  gather_facts: False
+  vars_files:
+    - ../vars/common.yml
+    - vars/{{host}}.yml
+  tasks:
+
+# /var/spool/cron/crontabs/mmx
+#
+#Ansible: backup mysql devapi
+#0 2,14 * * * ansible-playbook -i /mnt/data/projects/mmx/scripts/inventory backup.yml -e host=devapi > /dev/null
+
+
+    - local_action: cron name="backup mysql {{host}}" minute="10" hour="3,14" job="ansible-playbook -i /mnt/data/projects/mmx/scripts/inventory {{base_dir_scripts}}/backups-mysql/backup.yml -e \"host={{host}}\" > /dev/null"

@@ -1,0 +1,77 @@
+---
+
+# curl
+  - name: libcurl3
+    sudo: yes
+    sudo_user: root
+    shell: sudo apt-get install -y libcurl3
+
+
+
+  - name: curl
+    sudo: yes
+    sudo_user: root
+    shell: sudo apt-get install -y curl
+
+  - name: update
+    sudo: yes
+    sudo_user: root
+    shell: sudo apt-get update
+
+
+
+# packages for ruby
+  - name: Install packages for ruby
+    sudo: yes
+    sudo_user: root
+    apt: pkg={{item}} state=installed
+    with_items:
+       - g++
+       - libreadline6-dev
+       - zlib1g-dev
+       - libssl-dev
+       - libyaml-dev
+       - libsqlite3-dev
+       - sqlite3
+       - autoconf
+       - libgdbm-dev
+       - libncurses5-dev
+       - automake
+       - libtool
+       - bison
+       - pkg-config
+       - libffi-dev
+       - liblzma-dev
+       - zlib1g-dev
+       - libgmp-dev
+       - libgmp3-dev
+
+
+# rvm for user uadmin
+  #- name: copy script file
+    #sudo: true
+    #sudo_user: "{{ruby_user}}"
+    #copy: src=install_rvm_for_user.sh dest=/tmp/install_rvm_for_user.sh owner={{ruby_user}} group={{ruby_group}} mode=775
+
+  #- name: install rvm and install ruby
+#    sudo: true
+#    sudo_user: "{{ruby_user}}"
+#    command: bash /tmp/install_rvm_for_user.sh
+
+  - name: install rvm for user
+    shell: >
+      gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3;
+      \curl -sSL https://get.rvm.io | bash -s stable;
+      echo "source $HOME/.rvm/scripts/rvm" >> ~/.bash_profile;
+      echo "source $HOME/.rvm/scripts/rvm" >> ~/.bashrc;
+      source $HOME/.rvm/scripts/rvm;
+    args:
+      executable: /bin/bash
+
+
+
+
+
+
+
+

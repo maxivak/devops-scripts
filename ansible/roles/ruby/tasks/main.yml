@@ -1,0 +1,66 @@
+---
+
+# curl
+  - name: libcurl3
+    shell: sudo apt-get install -y libcurl3
+
+
+
+  - name: curl
+    shell: sudo apt-get install -y curl
+
+  - name: update
+    shell: sudo apt-get update
+
+
+
+# packages for ruby
+  - name: Install packages for ruby
+    apt: pkg={{item}} state=installed
+    with_items:
+       - g++
+       - libreadline6-dev
+       - zlib1g-dev
+       - libssl-dev
+       - libyaml-dev
+       - libsqlite3-dev
+       - sqlite3
+       - autoconf
+       - libgdbm-dev
+       - libncurses5-dev
+       - automake
+       - libtool
+       - bison
+       - pkg-config
+       - libffi-dev
+       - liblzma-dev
+       - zlib1g-dev
+       - libgmp-dev
+       - libgmp3-dev
+
+
+# rvm for user uadmin
+  - name: copy script file
+    sudo: true
+    sudo_user: "{{ruby_user}}"
+    copy: src=install_rvm_for_user.sh dest=/tmp/install_rvm_for_user.sh owner={{ruby_user}} group={{ruby_group}} mode=775
+
+  - name: install rvm and install ruby
+    sudo: true
+    sudo_user: "{{ruby_user}}"
+    command: bash /tmp/install_rvm_for_user.sh
+
+
+
+  - apt: update_cache=yes
+
+# install ruby 2.1.7 with rvm
+  - name: copy script file
+    sudo: true
+    sudo_user: "{{ruby_user}}"
+    copy: src=rvm_ruby_217_for_user.sh dest=/tmp/rvm_ruby_217_for_user.sh owner={{ruby_user}} group={{ruby_group}} mode=775
+
+  - name: install rvm and install ruby
+    sudo: true
+    sudo_user: "{{ruby_user}}"
+    command: bash /tmp/rvm_ruby_217_for_user.sh

@@ -1,0 +1,54 @@
+### restore data volumes
+# - restore_dir
+# - tag - backup tag
+
+
+- name: restore data volumes
+  hosts: all
+  sudo: yes
+  tasks:
+
+    - name: default restore_dir
+      set_fact:
+        restore_dir: "{{backups_dir_base}}/{{ gitlab_backups_dir }}"
+      when: restore_dir is not defined
+
+    - set_fact:
+        ext: "tar"
+        backup_filename_redis: "data-redis"
+        backup_filename_postgresql: "data-postgresql"
+        backup_filename_gitlab: "data-git"
+
+
+
+## pause
+    - name: pause containers
+      shell: >
+        docker pause gitlab-redis;
+        docker pause gitlab-postgresql;
+        docker pause gitlab;
+
+
+
+
+### restore
+
+    - name: remove all data
+      shell: >
+        sudo docker run --rm -v gitlab-data-redis:/data  ubuntu  /bin/bash -c "cd /data && rm -rf *; ";
+        sudo docker run --rm -v gitlab-data-postgresql:/data  ubuntu  /bin/bash -c "cd /data && rm -rf *; ";
+        sudo docker run --rm -v gitlab-data-git:/data  ubuntu  /bin/bash -c "cd /data && rm -rf *; ";
+
+    - name: restore from tar
+      shell: >
+        cd {{restore_dir}} && sudo docker run --rm -v gitlab-data-redis:/data -v $(pwd):/myhost busybox tar xvf /myhost/{{backup_filename_redis}}.tar;
+        cd {{restore_dir}} && sudo docker run --rm -v gitlab-data-postgresql:/data -v $(pwd):/myhost busybox tar xvf /myhost/{{backup_filename_postgresql}}.tar;
+        cd {{restore_dir}} && sudo docker run --rm -v gitlab-data-git:/data -v $(pwd):/myhost busybox tar xvf /myhost/{{backup_filename_gitlab}}.tar;
+
+
+### unpause containers
+    - name: unpause
+      shell: >
+        docker unpause gitlab-redis;
+        docker unpause gitlab-postgresql;
+        docker unpause gitlab;

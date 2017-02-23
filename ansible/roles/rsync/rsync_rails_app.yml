@@ -1,0 +1,35 @@
+---
+# input:
+# - host - server name
+# - app - application name
+
+- hosts: '{{host}}'
+  gather_facts: False
+  #sudo_user: root
+  remote_user: vagrant
+  vars_files:
+    - ../vars/common.yml
+    - vars/{{host}}.yml
+  tasks:
+    - name: set
+      set_fact:
+        backup_dir: "{{backup_dir_base}}/{{host}}/apps/{{app}}/current"
+        src_path: "/var/www/apps/{{app}}/current"
+
+    - name: dir
+      local_action: file path={{backup_dir}} state=directory mode=0775
+
+
+#    - synchronize:
+#        mode: pull
+#        src: "{{src_path}}"
+#        dest: "{{backup_dir}}"
+#        archive: yes
+#        delete: yes
+#        rsync_opts:
+#          - "--exclude=log"
+#          - "--exclude=tmp"
+#          - "--exclude=.git"
+
+    - name: rsync
+      local_action: shell rsync -avrt --delete vagrant@devsysapi.local:{{src_path}}  {{backup_dir}}

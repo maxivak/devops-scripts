@@ -1,0 +1,16 @@
+---
+
+  - name: update
+    sudo: yes
+    sudo_user: root
+    shell: sudo apt-get update
+
+
+# rvm for user uadmin
+
+
+  - name: install ruby 2.1.7
+    shell: source $HOME/.rvm/scripts/rvm; rvm install 2.1.7
+
+    args:
+      executable: /bin/bash

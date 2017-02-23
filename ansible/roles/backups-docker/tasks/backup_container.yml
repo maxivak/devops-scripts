@@ -1,0 +1,81 @@
+---
+### input:
+# - container - container name
+# - backup_dir -
+# - backup_tag_postfix - [optional]
+
+  - debug: msg="dd={{backup_dir}}"
+
+
+  - shell: mkdir -p {{backup_dir}}
+
+  - set_fact:
+      backup_tag_postfix: "{{ backup_tag_postfix | default('') }}"
+      date_day: "{{ ansible_date_time.year }}{{ ansible_date_time.month }}{{ ansible_date_time.day }}"
+      date_month: "{{ ansible_date_time.year }}{{ ansible_date_time.month }}"
+
+
+  - set_fact:
+#      backup_filepath: "{{ backup_dir }}/{{ container }}/{{ container }}-{{date_day}}.tar"
+      backup_tag: "{{ date_day }}{{ backup_tag_postfix }}"
+
+
+
+#
+
+
+#    - name: pause
+#      shell: >
+#        docker pause {{container}};
+#      ignore_errors: yes
+
+
+
+### commit containers to new backup images
+  - name: save current image id
+    command: sudo docker images -q backups/{{container}}:{{backup_tag}}
+    register: cmd_existing_image_id
+
+  - set_fact:
+      existing_image_id: "{{cmd_existing_image_id.stdout}}"
+
+  - name: commit all
+    shell: >
+      sudo docker commit {{ container }}  backups/{{container}}:{{backup_tag}};
+
+  - name: remove previous image
+    shell: >
+      sudo docker rmi {{existing_image_id}};
+    when: existing_image_id|default("") != ""
+
+
+
+### remove old images
+  - set_fact:
+      backup_keep_docker_images: 5
+
+  - include: remove_old_images.yml container="backups/{{container}}" n_keep="5"
+
+
+
+## unpause
+#    - name: unpause
+#      shell: >
+#        docker unpause {{ container }};
+
+
+
+### export image to tar file
+  - name: export to tar
+    shell: >
+      sudo docker save backups/{{ container }}:{{backup_tag}} > {{backup_dir}}/{{ container }}-{{backup_tag}}.tar;
+
+  - name: tar.gz
+    shell: >
+      cd {{backup_dir}} && gzip -c {{ container }}-{{backup_tag}}.tar > {{ container }}.tar.gz && rm {{ container }}-{{backup_tag}}.tar;
+
+
+  - name: fix permissions
+    shell: >
+      cd {{backup_dir}} && sudo chown {{main_user}}:{{main_user}} *;
+

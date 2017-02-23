@@ -1,0 +1,63 @@
+
+### input:
+# - backup_dir
+
+
+
+## some variables
+    - set_fact:
+        backup_dir: "{{backup_dir}}"
+
+
+    - set_fact:
+        container_gitlab: "{{container_gitlab | default('gitlab') }}"
+        container_redis: "{{container_redis | default('gitlab-redis') }}"
+        container_postgresql: "{{container_postgresql | default('gitlab-postgresql') }}"
+
+
+
+##
+    - set_fact:
+        backup_tag_postfix: "{{ backup_tag_postfix | default('') }}"
+        date_day: "{{ ansible_date_time.year }}{{ ansible_date_time.month }}{{ ansible_date_time.day }}"
+
+    - set_fact:
+        backup_tag: "{{ date_day }}{{ backup_tag_postfix }}"
+
+
+
+
+####################
+
+# backup container
+    - set_fact:
+        container: "{{ container_redis }}"
+    - include: ../../backups-docker/tasks/backup_container.yml
+
+    - set_fact:
+        container: "{{ container_postgresql }}"
+    - include: ../../backups-docker/tasks/backup_container.yml
+
+    - set_fact:
+        container: "{{ container_gitlab }}"
+    - include: ../../backups-docker/tasks/backup_container.yml
+
+
+# make copies
+    - set_fact:
+        ext: "tar.gz"
+        backup_keep_n_daily: 5
+        backup_keep_n_monthly: 12
+
+
+    - set_fact:
+        filename: "{{ container_redis }}"
+    - include: ../../backups/tasks/store_copies.yml
+    - set_fact:
+        filename: "{{ container_postgresql }}"
+    - include: ../../backups/tasks/store_copies.yml
+    - set_fact:
+        filename: "{{ container_gitlab }}"
+    - include: ../../backups/tasks/store_copies.yml
+
+

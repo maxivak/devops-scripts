@@ -1,0 +1,62 @@
+### install
+https://github.com/maxivak/youtrack-docker.git
+
+
+# info
+youtrack.friendlydata.com
+
+#
+sudo docker volume create --name youtrack-data
+sudo docker volume create --name youtrack-backup
+
+
+
+
+
+
+
+# build image from Dockerfile
+# copy Dockerfile from
+
+git clone  https://github.com/maxivak/youtrack-docker.git
+
+
+cd roles/youtrack/
+
+sudo docker build -t my-youtrack .
+
+
+# check images
+sudo docker images | grep my-youtrack
+
+
+
+
+# run
+sudo docker run -d \
+ --name="youtrack" \
+ -v youtrack-data:/opt/youtrack/data/ \
+ -v youtrack-backup:/opt/youtrack/backup/ \
+ -p 10081:80 \
+ my-youtrack
+
+
+
+
+
+
+
+
+
+
+### clean data in volumes
+sudo docker run --rm     \
+    -v  youtrack-data:/data  \
+    ubuntu  \
+    /bin/bash -c "cd /data; rm -rf *; "
+
+sudo docker run --rm     \
+    -v  youtrack-backup:/data  \
+    ubuntu  \
+    /bin/bash -c "cd /data; rm -rf *; "
+

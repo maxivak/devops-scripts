@@ -1,0 +1,14 @@
+
+# nfs
+    - apt: update_cache=yes
+
+    - name: nfs-kernel-server
+      shell: sudo apt-get install nfs-kernel-server
+
+    - name: nfs client components
+      shell: sudo apt-get install nfs-common
+
+
+
+    - name: start nfs
+      shell: sudo service nfs-kernel-server start

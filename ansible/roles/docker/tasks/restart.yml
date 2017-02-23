@@ -1,0 +1,7 @@
+---
+
+- name: restart docker
+  shell: >
+    sudo service docker start;
+    sudo systemctl restart docker;
+

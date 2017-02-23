@@ -1,0 +1,268 @@
+
+
+### server
+
+# http://serverfault.com/questions/212178/chown-on-a-mounted-nfs-partition-gives-operation-not-permitted
+
+
+
+
+
+# /etc/exports
+
+/disk2/data/gitlab/repos *(rw,insecure,sync,no_subtree_check,no_root_squash)
+
+
+
+sudo exportfs -a
+sudo service nfs-kernel-server restart
+
+
+### mount
+
+# nfs client
+192.168.50.50:/disk2/data/gitlab/repos    /mnt/repos  nfs  vers=3,rw,hard,bg,intr 0 0
+
+
+
+
+mkdir /disk2/users/mmx/mys1
+sudo mount -t nfs  -o vers=3,rw,hard,bg,intr 127.0.0.1:/disk2/s1 /disk2/users/mmx/mys1
+
+sudo mount -t nfs  -o vers=3,rw,hard,bg,intr 192.168.50.50:/disk2/s1 /mnt/mys1
+sudo mount -t nfs  -o vers=3,rw,hard,bg,intr 192.168.50.50:/disk2/data/gitlab/repos /mnt/repos
+
+# unmount
+sudo umount /disk2/users/mmx/mys2
+
+
+# mount all
+sudo mount -a
+
+
+# info
+sudo systemctl status nfs-kernel-server
+
+
+
+
+########## NFSv4
+
+Server requirements:
+rpcbind
+rpcidmapd
+nfs
+
+Client requirements:
+rpcbind
+rpcidmapd
+nfs
+
+
+# no ID mapping
+
+/sys/module/nfsd/parameters/nfs4_disable_idmapping
+Y => N
+
+??
+/sys/module/nfs/parameters/nfs4_disable_idmapping
+Y => N
+
+
+
+# server
+
+/etc/idmapd.conf
+
+[General]
+Domain = fd.com
+
+[Mapping]
+Nobody-User = nobody
+Nobody-Group = nobody
+
+
+???
+[Translation]
+Method = static
+
+[Static]
+skwang@achaeans.net = skwang
+m3user@achaeans.net = m3user
+
+
+
+# /etc/default/nfs-common
+NEED_IDMAPD= yes
+
+
+#
+sudo apt-get install rpcbind nfs-common nfs4-acl-tools nfs-kernel-server
+
+
+
+
+# Enable services
+
+sudo systemctl enable rpcbind.service nfs-idmap.service nfs-server.service
+
+
+# Start those services:
+sudo systemctl start rpcbind.service nfs-idmap.service nfs-server.service
+
+
+
+# enable services
+sudo update-rc.d nfs-kernel-server enable
+
+
+
+# shares
+
+/etc/exports
+
+/disk2/data/s1  *(rw,insecure,sync,fsid=0,no_subtree_check)
+/disk2/data/s1  *(rw,insecure,sync,no_subtree_check)
+or
+/disk2/data/s1  *(rw,insecure,sync,no_subtree_check,no_root_squash)
+
+
+
+# restart
+sudo exportfs -a
+
+
+# restart services
+sudo nfsidmap -c
+
+sudo service nfs-kernel-server restart
+sudo service rpcbind restart
+# sudo service idmapd restart
+#sudo service statd restart
+
+
+# check daemon is running
+pgrep rpc.idmapd
+
+
+
+# check
+sudo showmount -e
+
+
+
+
+
+
+### NFS client
+
+sudo apt-get update
+
+sudo apt-get install rpcbind nfs-common nfs4-acl-tools
+
+
+# /etc/default/nfs-common
+
+
+# egrep -v "^(#|$)" /etc/default/nfs-common
+NEED_STATD=no
+STATDOPTS=
+NEED_GSSD=no
+
+
+# no ID mapping
+/sys/module/nfs/parameters/nfs4_disable_idmapping
+Y => N
+
+/sys/module/nfsd/parameters/nfs4_disable_idmapping
+Y => N
+
+
+
+# Edit
+/etc/idmapd.conf
+
+
+[General]
+Domain = local
+
+[Mapping]
+Nobody-User = nobody
+Nobody-Group = nobody
+
+
+???
+# map the usernames on the NFS share to the usernames in the client
+
+
+Code:
+[General]
+Verbosity = 3
+Domain = achaeans.net
+
+[Mapping]
+Nobody-User = nobody
+Nobody-Group = nobody
+
+[Translation]
+Method = static
+
+[Static]
+skwang@achaeans.net = skwang
+m3user@achaeans.net = m3user
+
+
+
+# /etc/default/nfs-common
+NEED_IDMAPD= yes
+
+
+
+# restart
+sudo nfsidmap -c
+
+sudo service rpcbind restart
+sudo service idmapd restart
+
+
+# check daemon is running
+pgrep rpc.idmapd
+
+
+
+#
+showmount -e 192.168.50.50
+
+
+# mount
+sudo umount /mnt/s1
+
+sudo mount -t nfs4 192.168.50.50:/disk2/data/s1 /mnt/s1
+sudo mount -t nfs4 192.168.50.50:/disk2/data/s1 /mnt/s1 -o nfsvers=4,minorversion=2
+
+
+
+
+#
+
+/etc/fstab
+192.168.50.50:/disk2/data/s1    /mnt/s1   nfs auto,noatime,nolock,bg,nfsvers=4,intr,tcp,actimeo=1800 0 0
+
+
+
+
+
+# /etc/fstab
+?? ex1.
+
+<ip-address-to-server>:/srv/nfs/share1  /mnt/share1                                         nfs4    rsize=8192,wsize=8192,timeo=14,soft     0 0
+<ip-address-to-server>:/srv/nfs/share2  /srv/www/somewebsite.tld/default/public/share2      nfs4    rsize=8192,wsize=8192,timeo=14,soft     0 0
+<ip-address-to-server>:/srv/nfs/share3  /home/user/share3                                   nfs4    rsize=8192,wsize=8192,timeo=14,soft     0 0
+
+
+# Remount everything:
+sudo mount -a
+
+
+
+

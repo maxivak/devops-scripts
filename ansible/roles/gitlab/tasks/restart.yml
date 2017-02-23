@@ -1,0 +1,13 @@
+
+- name: restore containers
+  hosts: all
+  sudo: yes
+  tasks:
+
+
+    - name: restart
+      shell: >
+        sudo docker restart gitlab-redis;
+        sudo docker restart gitlab-postgresql;
+        sudo docker restart gitlab;
+

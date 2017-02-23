@@ -1,0 +1,30 @@
+server {
+    listen       80;
+    server_name  www.{{app_domain}};
+    return       301 http://{{app_domain}}$request_uri;
+}
+
+server {
+    {% if app_ip is defined %}
+    listen {{app_ip}}:80;
+    {% else %}
+    listen 80;
+    {% endif %}
+
+    {% if app_domain_aliases is defined %}
+    server_name {{app_domain}} {{app_domain_aliases}};
+    {% else %}
+    server_name {{app_domain}};
+    {% endif %}
+
+
+  passenger_enabled on;
+  passenger_app_env {{app_env}};
+
+  {% if app_ruby_version is defined %}
+     passenger_ruby /home/{{ruby_user}}/.rvm/wrappers/ruby-{{app_ruby_version}}/ruby;
+  {% endif %}
+
+
+  root /var/www/apps/{{app_name}}/current/public;
+}

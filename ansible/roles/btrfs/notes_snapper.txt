@@ -1,0 +1,44 @@
+
+# create config
+
+sudo snapper -c <configname> create-config /disk2
+
+# delete config
+# sudo snapper -c <configname> delete-config
+
+# list configs
+sudo snapper list-configs
+
+
+
+# edit config
+# /etc/snapper/configs/*
+
+
+# create a snapshot
+sudo snapper --config <configname> create --description "Snapshot temp"
+
+# view the snapshot information
+sudo snapper -c <configname> list
+
+# view snapshots
+# /disk2/.snapshots
+
+# compare snapshots
+# diff between 1st and 2nd snapshot
+snapper -c <configaname> status 1..2
+
+
+# restore ALL files from the snapshot
+snapper -c <configname> -v undochange 1..4
+
+
+
+### snapper-gui
+# install - see install_snapper.sh
+
+
+# run the program
+sudo snapper-gui
+
+

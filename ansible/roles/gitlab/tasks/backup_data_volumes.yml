@@ -1,0 +1,48 @@
+### input:
+# - backup_dir
+
+
+
+- set_fact:
+    volume_redis: "gitlab-data-redis"
+    volume_postgresql: "gitlab-data-postgresql"
+    volume_gitlab: "gitlab-data-git"
+
+
+######
+
+# backup volumes
+- set_fact:
+    volume: "{{volume_redis}}"
+- include: ../../backups-docker/tasks/backup_data_volume.yml
+
+- set_fact:
+    volume: "{{volume_postgresql}}"
+- include: ../../backups-docker/tasks/backup_data_volume.yml
+
+- set_fact:
+    volume: "{{volume_gitlab}}"
+- include: ../../backups-docker/tasks/backup_data_volume.yml
+
+
+### make copies
+
+- set_fact:
+    ext: "tar.gz"
+    backup_keep_n_daily: 5
+    backup_keep_n_monthly: 12
+
+
+
+- set_fact:
+    filename: "{{ volume_redis }}"
+- include: ../../backups/tasks/store_copies.yml
+
+- set_fact:
+    filename: "{{ volume_postgresql }}"
+- include: ../../backups/tasks/store_copies.yml
+
+- set_fact:
+    filename: "{{ volume_gitlab }}"
+- include: ../../backups/tasks/store_copies.yml
+

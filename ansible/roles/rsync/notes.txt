@@ -1,0 +1,7 @@
+
+### backup Rails app
+
+ansible-playbook -i /mnt/data/projects/mmx/scripts/inventory rsync_rails_app.yml -e "host=devapi app=api"
+
+# add cron
+ansible-playbook -i /mnt/data/projects/mmx/scripts/inventory rsync_rails_app.yml -e "host=devapi app=api"

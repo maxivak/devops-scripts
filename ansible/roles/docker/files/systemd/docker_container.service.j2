@@ -1,0 +1,29 @@
+[Unit]
+Description=docker container {{container}}
+After=docker.service
+Requires=docker.service
+
+[Service]
+TimeoutStartSec=0
+Restart=always
+RestartSec=10s
+Type=notify
+NotifyAccess=all
+
+# run using system-docker
+ExecStart=/opt/bin/systemd-docker run --name {{container}}
+ExecStop=/opt/bin/systemd-docker stop {{container}}
+
+# run - basic
+#ExecStart=/usr/bin/docker start -a {{container}}
+#ExecStop=/usr/bin/docker stop -t 2 {{container}}
+
+
+# callbacks
+#ExecStartPre=-/usr/bin/docker stop {{container}}
+#ExecStartPre=-/usr/bin/docker rm {{container}}
+#ExecStartPre=/usr/bin/docker pull {{container}}
+
+
+[Install]
+WantedBy=multi-user.target

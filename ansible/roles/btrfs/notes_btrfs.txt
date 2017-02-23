@@ -1,0 +1,4 @@
+
+# list subvolumes
+
+sudo btrfs subvolume list /disk2

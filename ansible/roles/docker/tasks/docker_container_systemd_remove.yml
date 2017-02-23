@@ -1,0 +1,29 @@
+---
+### remove docker container monitoring with systemd
+### input:
+# - container - container name
+
+- hosts: all
+  sudo: yes
+  tasks:
+
+    - set_fact:
+        service_name: "docker_{{container}}"
+
+    - name: stop service
+      shell: sudo systemctl stop {{service_name}}
+      ignore_errors: yes
+
+    - name: disable service
+      shell: sudo systemctl disable {{service_name}}
+      ignore_errors: yes
+
+    - name: remove service file
+      file: path=/etc/systemd/system/{{service_name}}.service state=absent
+
+
+    - name: systemctl reload
+      shell: sudo systemctl  daemon-reload
+
+
+

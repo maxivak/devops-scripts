@@ -1,0 +1,28 @@
+---
+### input:
+# - volume - volume name
+# - backup_dir -
+
+
+- shell: mkdir -p {{backup_dir}}
+
+- set_fact:
+    ext: "tar"
+
+
+### backup data volume to tar file
+
+- name: backup to tar file
+  shell: >
+    cd {{backup_dir}} &&  sudo docker run --rm -v {{volume}}:/data  -v $(pwd):/myhost busybox tar cvf /myhost/{{volume}}.{{ext}} /data
+
+
+
+### to tar.gz
+- name: copy to main backup file tar.gz
+  shell: >
+    cd {{backup_dir}} && gzip -c {{ volume }}.tar > {{ volume }}.tar.gz;
+
+
+
+

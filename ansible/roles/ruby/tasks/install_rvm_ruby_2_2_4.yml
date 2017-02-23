@@ -1,0 +1,21 @@
+---
+
+  - name: update
+    sudo: yes
+    sudo_user: root
+    shell: sudo apt-get update
+
+
+# rvm for user uadmin
+
+
+  - name: install ruby 2.2.4
+    #sudo: no
+    #sudo_user: uadmin
+    #shell: rvm install 2.2.4
+    shell: source $HOME/.rvm/scripts/rvm; rvm install 2.2.4
+    #shell: . /etc/profile && rvm install 2.2.4
+    #command: "/bin/bash --login -c '/home/uadmin/.rvm/bin/rvm install 2.2.4 --default executable=/bin/bash'"
+
+    args:
+      executable: /bin/bash

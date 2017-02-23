@@ -1,0 +1,35 @@
+---
+### backup dir
+# input:
+# see /vars/default.yml
+# - filename - short name for the backed up file
+# - backup_dir - local dir where to backup to
+# - remote_path_base - remote folder on the server - /var/www/apps/$app_name
+# - exclude_dirs
+
+
+- debug: msg="backup to {{backup_dir}}"
+
+- name: create dirs
+  local_action: file path={{backup_dir}} state=directory mode=0775
+
+
+- set_fact:
+    p_exclude_dirs: "--exclude current/{{ exclude_dirs | join(' --exclude current/') }}"
+
+#  - debug: msg="v={{exclude_dirs}}"
+
+
+- name: generate archive on server
+  shell: >
+    cd {{remote_path_base}};
+    tar -hzcvf /tmp/backup-{{filename}}.tar.gz {{p_exclude_dirs}} current
+
+
+
+###
+- name: download backup file
+  fetch: src=/tmp/backup-{{filename}}.tar.gz dest={{backup_dir}}/{{filename}}.tar.gz flat=yes
+
+
+

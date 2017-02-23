@@ -1,0 +1,34 @@
+# input
+# dir
+# group
+
+---
+
+  - name: dir
+    file: path={{dir}} state=directory mode=0775 owner=nobody group={{group}}
+
+
+  # config nfs
+  - name: edit /etc/exports
+    lineinfile: >
+      dest=/etc/exports regexp="{{dir}}\s+.*"
+      line="{{dir}}  *(rw,insecure,sync,no_subtree_check,no_root_squash)"
+      state=present
+
+
+
+# nfs client
+
+
+  - name: fix permissions for dir
+    shell: sudo chown nobody:{{group}} -R {{dir}}
+
+
+  - name: exportfs
+    shell: sudo exportfs -a
+
+  - name: restart nfs
+    shell: sudo service nfs-kernel-server restart
+
+
+

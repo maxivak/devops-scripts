@@ -1,0 +1,12 @@
+---
+### input:
+# - container
+# - n_keep
+
+  - set_fact:
+     temp_n_tail: "{{ (n_keep|int +2)|int }}"
+
+  - name: remove old images
+    shell: >
+      sudo docker rmi $(sudo docker images --format "table {{ '{{' }}.ID{{ '}}' }}\t{{ '{{' }}.Tag{{ '}}' }}\t{{ '{{' }}.CreatedAt{{ '}}' }}" {{container}} | tail -n +{{temp_n_tail}} | awk '{print $1}');
+    ignore_errors: yes
